@@ -35,6 +35,8 @@ def train(model, param, epoch, devices:Union[str,List[int]],mu=1, ga=0.1, data_n
         device_ids = list(range(torch.cuda.device_count())) 
     
     model = getattr(module, model)(*param)
+    model.set_simple_train(True)
+    model.setT(5)
     coder = module.Trans_CNN4D(3,3,8,6)
     coder.load_state_dict(torch.load("./model/Trans_CNN4D_[3, 3, 8, 6, 8, 1, True]_best.pt"),strict=False)
     encoder=coder.patch_embedding
@@ -53,7 +55,7 @@ def train(model, param, epoch, devices:Union[str,List[int]],mu=1, ga=0.1, data_n
     # decoder=decoder.to(device_ids[5])
 
     correction = torch.nn.MSELoss()
-    optimizer = torch.optim.RMSprop(model.parameters())
+    optimizer = torch.optim.AdamW(model.parameters())
     writer = SummaryWriter(log_dir=f'./runs/{model.module.__class__.__name__}_{param}')
     start = time.time()
     ep=0        
@@ -91,7 +93,7 @@ def train(model, param, epoch, devices:Union[str,List[int]],mu=1, ga=0.1, data_n
                 # x=x.to(device_ids[1])
                 # Bx=Bx.to(device_ids[1])
                 # y=y.to(device_ids[1])
-                out = model(x,Bx)
+                out,y = model(x,Bx,y)
                 # out=decoder(out)
                 # out=out.to(device_ids[7])
                 loss = correction(out, y)

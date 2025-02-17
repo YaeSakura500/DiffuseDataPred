@@ -1,3 +1,4 @@
+from typing import Optional
 import torch
 from Conv4d import Conv4d
 from Conv4dTranspose import ConvTranspose4d
@@ -348,23 +349,62 @@ class Trans(nn.Module):
 
 
 class Trans_gen(nn.Module):
-    def __init__(self,embdim,num_heads,numlayers):
+    def __init__(self,embdim,num_heads,numlayers,simple_train:bool = False,T: Optional[int] = None):
         super(Trans_gen, self).__init__()
         self.gather=nn.Linear(2*embdim,embdim)
         self.trans=nn.Transformer(embdim,num_heads,numlayers,numlayers,batch_first=True)
         self.ffd=nn.Linear(embdim,embdim)
-    def forward(self, x,b):
+        self.simple_train=simple_train # 使用真值作为输入，减少累计误差
+        self.T=T # 预测步数
+    
+    def forward(self, x,b,y):
+        shape=x.shape
+        x=x.flatten(2)
+        b=b.flatten(2)
+        y=y.flatten(2)
+        input=self.gather(torch.cat((x,b),dim=-1))
+        if self.T is None:
+            T=input.shape[1]
+        else:
+            T=self.T
+            if T>y.shape[1]:
+                T=y.shape[1]
+        if self.simple_train==True:
+            for i in range(T):
+                out=self.trans(input,input)
+                y=torch.cat((y,out),dim=1)
+                input=torch.cat((input,y[::,T:T+1:,]),dim=1)
+            out=self.ffd(y[::,-T::,])
+        else:
+            for i in range(T):
+                out=self.trans(input,input)[::,-1::,]
+                out=self.ffd(out)
+                input=torch.cat((input,out),dim=1)
+            out=input[::,-T::,]
+        out=out.reshape(shape[0],T,shape[2],shape[3],shape[4],shape[5])
+        y=y[::,0:T:,].reshape(shape[0],T,shape[2],shape[3],shape[4],shape[5])
+        
+        return out,y
+    
+    def gen(self,x,b):
         shape=x.shape
         x=x.flatten(2)
         b=b.flatten(2)
         input=self.gather(torch.cat((x,b),dim=-1))
         T=input.shape[1]
         for i in range(T):
-            out=self.trans(input,input)
-            input=torch.cat((input,out[::,-1::,]),dim=1)
-        out=self.ffd(input[::,-T::,])
+            out=self.trans(input,input)[::,-1::,]
+            out=self.ffd(out)
+            input=torch.cat((input,out),dim=1)
+        out=input[::,-T::,]
         out=out.reshape(shape)
         return out
+    
+    def setT(self,T: Optional[int]):
+        self.T=T
+    
+    def set_simple_train(self,simple_train:bool):
+        self.simple_train=simple_train
 
 
 
