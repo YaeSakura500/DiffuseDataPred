@@ -1,0 +1,115 @@
+2024-12-25 11:12:51.106224: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2024-12-25 11:12:51.118964: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1735096371.134597 2330311 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1735096371.139429 2330311 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2024-12-25 11:12:51.155253: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+/home/user/Diffuse/test/main.py:38: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  model=torch.load("./models/CNN_model_3.pt")
+/home/user/Diffuse/test/main.py:39: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  encoder=torch.load("./models/CNN_Encoder.pt")
+loading data
+prepare dataloader
+data loaded
+start training
+epoch:0,loss:0.10994174238294363,TimeCost:293.76857256889343
+epoch:1,loss:0.09822700172662735,TimeCost:588.7947692871094
+epoch:2,loss:0.06736819073557854,TimeCost:881.2881960868835
+epoch:3,loss:0.061880502849817276,TimeCost:1169.7956614494324
+epoch:4,loss:0.055633299984037876,TimeCost:1457.197613477707
+epoch:5,loss:0.05127796344459057,TimeCost:1741.0320909023285
+epoch:6,loss:0.04688011761754751,TimeCost:2029.755773305893
+epoch:7,loss:0.04419941361993551,TimeCost:2311.535192966461
+epoch:8,loss:0.04029694478958845,TimeCost:2587.0881011486053
+epoch:9,loss:0.03780112136155367,TimeCost:2863.79718375206
+epoch:10,loss:0.03582849446684122,TimeCost:3135.9581973552704
+epoch:11,loss:0.034830208867788315,TimeCost:3405.5261657238007
+epoch:12,loss:0.03408058546483517,TimeCost:3680.5607266426086
+epoch:13,loss:0.03358924947679043,TimeCost:3954.878163099289
+epoch:14,loss:0.03312048967927694,TimeCost:4228.365329504013
+epoch:15,loss:0.032658474519848824,TimeCost:4493.834408998489
+epoch:16,loss:0.03227889630943537,TimeCost:4760.730911970139
+epoch:17,loss:0.03197660204023123,TimeCost:5030.273796319962
+epoch:18,loss:0.03172162268310785,TimeCost:5296.445736169815
+epoch:19,loss:0.03146598720923066,TimeCost:5568.67355632782
+epoch:20,loss:0.031220391392707825,TimeCost:5840.998248100281
+epoch:21,loss:0.03099304111674428,TimeCost:6109.80082321167
+epoch:22,loss:0.03077235259115696,TimeCost:6377.81005525589
+epoch:23,loss:0.030564415734261274,TimeCost:6642.689986228943
+epoch:24,loss:0.030362680554389954,TimeCost:6910.44265294075
+epoch:25,loss:0.030161933973431587,TimeCost:7178.021682024002
+epoch:26,loss:0.02996739838272333,TimeCost:7441.10507106781
+epoch:27,loss:0.029776178300380707,TimeCost:7708.076388835907
+epoch:28,loss:0.02958652190864086,TimeCost:7971.093906402588
+epoch:29,loss:0.029401332139968872,TimeCost:8234.331755399704
+epoch:30,loss:0.029216479044407606,TimeCost:8500.578649520874
+epoch:31,loss:0.02903348207473755,TimeCost:8761.813940763474
+epoch:32,loss:0.028852068353444338,TimeCost:9026.607455015182
+epoch:33,loss:0.02867179736495018,TimeCost:9290.168053627014
+epoch:34,loss:0.028492181561887264,TimeCost:9553.944084644318
+epoch:35,loss:0.02831368101760745,TimeCost:9817.341237783432
+epoch:36,loss:0.02813586127012968,TimeCost:10079.070291996002
+epoch:37,loss:0.027958760503679514,TimeCost:10342.926151514053
+epoch:38,loss:0.02778251515701413,TimeCost:10608.14981675148
+epoch:39,loss:0.027607204858213663,TimeCost:10876.707582473755
+epoch:40,loss:0.02743247989565134,TimeCost:11137.470702171326
+epoch:41,loss:0.027257350739091635,TimeCost:11401.82015156746
+epoch:42,loss:0.027079877443611622,TimeCost:11666.478705883026
+epoch:43,loss:0.026899190619587898,TimeCost:11930.468992471695
+epoch:44,loss:0.026717447210103273,TimeCost:12196.943284749985
+epoch:45,loss:0.026537881698459387,TimeCost:12467.964114189148
+epoch:46,loss:0.026359585113823414,TimeCost:12733.900066614151
+epoch:47,loss:0.026181716471910477,TimeCost:13004.36142206192
+epoch:48,loss:0.026004695799201727,TimeCost:13271.028407812119
+epoch:49,loss:0.02582695847377181,TimeCost:13538.949187517166
+epoch:50,loss:0.025650220457464457,TimeCost:13802.195005178452
+epoch:51,loss:0.02547384984791279,TimeCost:14069.621725320816
+epoch:52,loss:0.02529754303395748,TimeCost:14339.606213092804
+epoch:53,loss:0.02512269327417016,TimeCost:14607.726558208466
+epoch:54,loss:0.02494750777259469,TimeCost:14874.372510433197
+epoch:55,loss:0.024774052668362856,TimeCost:15143.62707233429
+epoch:56,loss:0.024600348435342312,TimeCost:15413.310749530792
+epoch:57,loss:0.024429168086498976,TimeCost:15682.193390130997
+epoch:58,loss:0.024260707665234804,TimeCost:15946.146219015121
+epoch:59,loss:0.024107949808239937,TimeCost:16212.288592338562
+epoch:60,loss:0.024191173259168863,TimeCost:16478.88568663597
+epoch:61,loss:0.02617755765095353,TimeCost:16745.977757930756
+epoch:62,loss:0.024819405749440193,TimeCost:17009.853971719742
+epoch:63,loss:0.02435527415946126,TimeCost:17279.216892957687
+epoch:64,loss:0.023973283357918262,TimeCost:17546.46096420288
+epoch:65,loss:0.023714978713542223,TimeCost:17814.6749522686
+epoch:66,loss:0.023336860816925764,TimeCost:18080.49824309349
+epoch:67,loss:0.02312007173895836,TimeCost:18347.41288781166
+epoch:68,loss:0.022933560889214277,TimeCost:18614.52536225319
+epoch:69,loss:0.02272889344021678,TimeCost:18879.876945495605
+epoch:70,loss:0.022550638299435377,TimeCost:19147.824256658554
+epoch:71,loss:0.022397499065846205,TimeCost:19419.004194498062
+epoch:72,loss:0.022227248176932335,TimeCost:19687.009130239487
+epoch:73,loss:0.022085097152739763,TimeCost:19951.772886753082
+epoch:74,loss:0.021919097751379013,TimeCost:20216.199365615845
+epoch:75,loss:0.021756852976977825,TimeCost:20477.43984222412
+epoch:76,loss:0.021649200469255447,TimeCost:20740.898336172104
+epoch:77,loss:0.021448736544698477,TimeCost:21003.468767404556
+epoch:78,loss:0.021295628044754267,TimeCost:21265.01399374008
+epoch:79,loss:0.021156625356525183,TimeCost:21533.27251434326
+epoch:80,loss:0.02115421975031495,TimeCost:21802.856270313263
+epoch:81,loss:0.026788702234625816,TimeCost:22073.235728263855
+epoch:82,loss:0.025177450384944677,TimeCost:22337.924234628677
+epoch:83,loss:0.02395584061741829,TimeCost:22603.288932561874
+epoch:84,loss:0.022296620067209005,TimeCost:22872.736273527145
+epoch:85,loss:0.021405124105513096,TimeCost:23142.85887670517
+epoch:86,loss:0.02091377228498459,TimeCost:23405.88685965538
+epoch:87,loss:0.020619488321244717,TimeCost:23669.1658680439
+epoch:88,loss:0.02042481442913413,TimeCost:23937.68368291855
+epoch:89,loss:0.020263823214918375,TimeCost:24202.186947345734
+epoch:90,loss:0.02009459212422371,TimeCost:24468.854271650314
+epoch:91,loss:0.01992222899571061,TimeCost:24737.36791086197
+epoch:92,loss:0.019780771806836128,TimeCost:25005.16961789131
+epoch:93,loss:0.019649230875074863,TimeCost:25273.005035877228
+epoch:94,loss:0.019510814920067787,TimeCost:25542.535893917084
+epoch:95,loss:0.01938648521900177,TimeCost:25805.84193277359
+epoch:96,loss:0.01926276460289955,TimeCost:26072.09902358055
+epoch:97,loss:0.019144917372614145,TimeCost:26335.210830688477
+epoch:98,loss:0.019029479008167982,TimeCost:26598.548424959183
+epoch:99,loss:0.018917702604085207,TimeCost:26860.14737725258
