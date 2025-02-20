@@ -10,6 +10,7 @@ import random
 import dataprepare
 import dataprepare_new
 import module
+from encoder_decoder import transformer
 
 
 
@@ -61,22 +62,26 @@ def test(model_name, param,mu,ga, devices: Union[str, List[int]], data_num=108, 
     else:
         device_ids = list(range(torch.cuda.device_count()))
 
-    model = getattr(module, model_name)(*param)
+    # model = getattr(module, model_name)(*param)
+    model=transformer(d_model=9216,num_encoder_layers=2,num_decoder_layers=2,dim_feedforward=2896,batch_first=True)
     # encoder = module.Encoder()
     coder = module.Trans_CNN4D(3,3,8,6)
     coder.load_state_dict(torch.load("./model/Trans_CNN4D_[3, 3, 8, 6, 8, 1, True]_best.pt"),strict=False)
     encoder=coder.patch_embedding
     decoder=coder.patch_decoding
-    model.load_state_dict(torch.load(f"./model/{model.__class__.__name__}_{param}_best.pt"))
+    model.load_state_dict(torch.load(f"./model/transformer_9216_2_2_2896_best.pt"))
+    # model.load_state_dict(torch.load(f"./model/{model.__class__.__name__}_9216_2_2_1000_best.pt"))
+    model.set_simple_train(False)
+        # model.load_state_dict(torch.load(f"./model/{model.__class__.__name__}_{param}_best.pt"))
     # encoder.load_state_dict(torch.load("./model/Encoder.pt"))
 
-    model = data_parallel.BalancedDataParallel(0,module=model, device_ids=device_ids, output_device=device_ids[0])
-    # encoder = DataParallel(module=encoder, device_ids=device_ids, output_device=0)
-    encoder=data_parallel.BalancedDataParallel(0,module=encoder,device_ids=device_ids,output_device=device_ids[0])
-    decoder=data_parallel.BalancedDataParallel(0,module=decoder,device_ids=device_ids,output_device=device_ids[7])
-    model.to(device_ids[0])
+    # model = data_parallel.BalancedDataParallel(0,module=model, device_ids=device_ids, output_device=device_ids[0])
+    # # encoder = DataParallel(module=encoder, device_ids=device_ids, output_device=0)
+    # encoder=data_parallel.BalancedDataParallel(0,module=encoder,device_ids=device_ids,output_device=device_ids[0])
+    # decoder=data_parallel.BalancedDataParallel(0,module=decoder,device_ids=device_ids,output_device=device_ids[7])
+    model=model.to(device_ids[1])
     encoder=encoder.to(device_ids[0])
-    decoder=decoder.to(device_ids[0])
+    decoder=decoder.to(device_ids[2])
     # encoder.to(device_ids[0])
 
     correction = torch.nn.MSELoss()
@@ -105,11 +110,11 @@ def test(model_name, param,mu,ga, devices: Union[str, List[int]], data_num=108, 
             x, Bx, y = item
             Bx = Bx.to(device_ids[0])
             x = x.to(device_ids[0])
-            y = y.to(device_ids[7])
-            x1=encoder(x)
-            Bx=encoder(Bx)
-            out = model( x1,Bx)
-            out=decoder(out)
+            y = y.to(device_ids[2])
+            x1=encoder(x).to(device_ids[1])
+            Bx=encoder(Bx).to(device_ids[1])
+            out,_ = model( x1,Bx,x1)
+            out=decoder(out.to(device_ids[2]))
             loss = correction(out, y)
             zero = torch.zeros_like(y)
             loss2 = correction(y, zero)
@@ -136,4 +141,4 @@ gas=[0.1,0.001,1e-05]
 
 for i in range(len(mus)):
     for j in range(len(gas)):
-        test('Trans_gong', param=[9216,4096,16,2], mu=mus[i],ga=gas[j],devices='all', data_num=8, batch_size=8, new_data=True)
+        test('transformer', param=[9216,2,2,1000], mu=mus[i],ga=gas[j],devices='all', data_num=2, batch_size=2, new_data=True)

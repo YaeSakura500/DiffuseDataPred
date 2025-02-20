@@ -1,3 +1,4 @@
+import json
 import h5py
 import torch
 from torch.utils.data import Dataset
@@ -82,12 +83,29 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         return self.data[idx]
 
-# 示例用法
-filenames = ["./data_diffusion/diffusion/gen_data_mu2_ga0.1_51.h5",
-            "./data_diffusion/diffusion/gen_data_mu1_ga1e-05_258.h5"]  # 替换为您的文件名列表
-dataset = CustomDataset(filenames)
+class CompressedDataSet(Dataset):
+    def __init__(self,filename):
+        super(CompressedDataSet,self).__init__()
+        with open(filename,'r') as file:
+            datas=json.load(file)
+        self.data=[]
+        for i in range(len(datas)):
+            x,bx,y=datas[i]
+            x=torch.tensor(x).squeeze(dim=0)
+            bx=torch.tensor(bx).squeeze(dim=0)
+            y=torch.tensor(y).squeeze(dim=0)
+            self.data.append((x,bx,y))
+    def __len__(self):
+        return len(self.data)
+    def __getitem__(self, index):
+        return self.data[index]
 
-# 获取数据示例
-for i in range(len(dataset)):
-    data = dataset[i]
-    print(data)
+# 示例用法
+# filenames = ["./data_diffusion/diffusion/gen_data_mu2_ga0.1_51.h5",
+#             "./data_diffusion/diffusion/gen_data_mu1_ga1e-05_258.h5"]  # 替换为您的文件名列表
+# dataset = CustomDataset(filenames)
+
+# # 获取数据示例
+# for i in range(len(dataset)):
+#     data = dataset[i]
+#     print(data)
