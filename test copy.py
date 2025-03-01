@@ -54,23 +54,23 @@ def generate_pseudocolor_image(tensor1, tensor2, output_path):
     plt.savefig(output_path)
     plt.close()
 
-def test(model_name, param,mu,ga, devices: Union[str, List[int]], data_num=108, batch_size=27, new_data=False):
+def test(model_name, param,mu,ga, devices: Union[str, List[int]], data_num=108, batch_size=27, new_data=True):
     if isinstance(devices, List):
         device_ids = devices
     else:
         device_ids = list(range(torch.cuda.device_count()))
 
     model = getattr(module, model_name)(*param)
-    # encoder = module.Encoder()
+    encoder = module.Encoder()
 
-    model.load_state_dict(torch.load(f"./model/{model.__class__.__name__}_{param}_best.pt"))
-    # encoder.load_state_dict(torch.load("./model/Encoder.pt"))
+    model.load_state_dict(torch.load(f"./model/CNN4D_best.pt"))
+    encoder.load_state_dict(torch.load("./model/Encoder.pt"))
 
-    model = DataParallel(module=model, device_ids=device_ids, output_device=device_ids[0])
-    # encoder = DataParallel(module=encoder, device_ids=device_ids, output_device=0)
+    model = DataParallel(module=model, device_ids=device_ids, output_device=device_ids[-1])
+    encoder = DataParallel(module=encoder, device_ids=device_ids, output_device=0)
     
     model.to(device_ids[0])
-    # encoder.to(device_ids[0])
+    encoder.to(device_ids[0])
 
     correction = torch.nn.MSELoss()
     
@@ -95,21 +95,21 @@ def test(model_name, param,mu,ga, devices: Union[str, List[int]], data_num=108, 
     with torch.no_grad():
         for i, item in enumerate(dataloader):
             x, Bx, y = item
-            # Bx = Bx.to(device_ids[0])
+            Bx = Bx.to(device_ids[0])
             x = x.to(device_ids[0])
-            # y = y.to(device_ids[-1])
+            y = y.to(device_ids[-1])
             
-            # Nx = encoder(Bx)
-            out = model( x)
-            loss = correction(out, x)
-            zero = torch.zeros_like(x)
-            loss2 = correction(x, zero)
+            Nx = encoder(Bx)
+            out = model( x,Nx)
+            loss = correction(out, y)
+            zero = torch.zeros_like(y)
+            loss2 = correction(y, zero)
             loss3=correction(out,zero)
             differ_loss += loss2.item()
             total_loss += loss.item()
             out_loss+=loss3.item()
             
-            generate_pseudocolor_image(out[0, 1, 2, :, :, 3], x[0, 1, 2, :, :, 3], f'./out_new/{model_name}_{param}_re_teston_mu{mu}_ga{ga}_sample{i}.png')
+            generate_pseudocolor_image(out[0, 1, 2, :, :, 3], x[0, 1, 2, :, :, 3], f'./mid/{model_name}_{param}_re_teston_mu{mu}_ga{ga}_sample{i}.png')
         
     total_loss /= len(dataloader)
     differ_loss /= len(dataloader)
@@ -127,4 +127,4 @@ gas=[0.1,0.001,1e-05]
 
 for i in range(len(mus)):
     for j in range(len(gas)):
-        test('Trans_CNN4D', param=[3,3,8,16], mu=mus[i],ga=gas[j],devices='all', data_num=8, batch_size=8, new_data=True)
+        test('CNN4D', param=[3], mu=mus[i],ga=gas[j],devices='all', data_num=8, batch_size=8, new_data=True)
