@@ -23,9 +23,9 @@ from loss import Not0Loss
 def get_dataset(mu,ga,batch_size):
     with open('mu_ga_files_new.json') as f:
         data = json.load(f)
-    my_trainset = CustomDataset(sample(data[f'{mu}'][f'{ga}'],30))
+    my_trainset = CustomDataset(sample(data[f'{mu}'][f'{ga}'],120))
     trainloader = torch.utils.data.DataLoader(my_trainset, 
-        batch_size=batch_size, num_workers=2,shuffle=True)
+        batch_size=batch_size, num_workers=2,shuffle=True,drop_last=True)
     return trainloader
 
 
@@ -37,7 +37,6 @@ def get_compressed_dataset(mu,ga,batch_size):
 
 def train_with_compressed(epochs,mu=1, ga=1e-05,batch_size=20,RF=False):
     device_ids = list(range(torch.cuda.device_count())) 
-    trainloader = get_compressed_dataset(mu,ga,batch_size)
 
     model = transformer(d_model=9216,num_encoder_layers=2,num_decoder_layers=2,dim_feedforward=2896,batch_first=True).to(device_ids[0])
     param='9216_2_2_2896'
@@ -48,58 +47,62 @@ def train_with_compressed(epochs,mu=1, ga=1e-05,batch_size=20,RF=False):
 
     optimizer = torch.optim.AdamW(model.parameters())
 
-    # 假设我们的loss是这个
-    loss_func = Not0Loss
+    # # 假设我们的loss是这个
+    # loss_func = Not0Loss
     writer = SummaryWriter(log_dir=f'./runs_dp/{model.module.__class__.__name__}_'+param)
     best_loss = float('inf')
     ### 3. 网络训练  ###
     model.train()
-    for epoch in range(epochs):
-        total_loss=0
-        if epoch==9:
-            model.module.set_simple_train(False)
-        for x, Bx, y in trainloader:
-            optimizer.zero_grad()
-            x = x.to(device_ids[0])
-            Bx=Bx.to(device_ids[0])
-            y=y.to(device_ids[0])
-            out,label = model(x,Bx,y)
-            loss = loss_func(out,label,ep=0)
-            loss.backward()
-            total_loss+=loss.item()
-            optimizer.step()
-
-
-        writer.add_scalar('Loss/train', total_loss, epoch)
-                # 判断是否包含 NaN 或 Inf
-        if torch.isnan(loss).any() or torch.isinf(loss).any():
-            print("Loss contains NaN or Inf values, stopping training...")
-            break
-            
-        # Update best model if current loss is lower
-        if total_loss < best_loss:
-            best_loss = total_loss
-            torch.save(model.module.state_dict(), f"./model/{model.module.__class__.__name__}_"+param+"_best.pt")
- 
-    torch.save(model.module.state_dict(), f"./model/{model.module.__class__.__name__}_"+param+"_final.pt")
+    ep=0
+    for mus in [1,2,3]:
+        for gas in [0.1,0.001,1e-05]:
+            trainloader = get_compressed_dataset(mus,gas,batch_size)
+            for _ in range(epochs):
+                total_loss=0
+                for x, Bx, y in trainloader:
+                    optimizer.zero_grad()
+                    x = x.to(device_ids[0])
+                    Bx=Bx.to(device_ids[0])
+                    y=y.to(device_ids[0])
+                    _,loss = model(x,Bx,y)
+                    loss.sum().backward()
+                    total_loss+=loss.sum().item()
+                    optimizer.step()
+                
+                writer.add_scalar('Loss/train', total_loss, ep)
+                ep+=1
+                        # 判断是否包含 NaN 或 Inf
+                if torch.isnan(loss).any() or torch.isinf(loss).any():
+                    print("Loss contains NaN or Inf values, stopping training...")
+                    break
+                    
+                # Update best model if current loss is lower
+                if total_loss < best_loss:
+                    best_loss = total_loss
+                    torch.save(model.module.state_dict(), f"./model/{model.module.__class__.__name__}_"+param+"_best.pt")
+        
+            torch.save(model.module.state_dict(), f"./model/{model.module.__class__.__name__}_"+param+"_final.pt")
 
     
-def train(epochs,mu=1, ga=1e-05,batch_size=5,RF=False):
-    device_ids=[1,2,3,4,5,6]
+def train(epochs,mu=3, ga=0.1,batch_size=4,RF=False):
+    device_ids=[1,2,3,4,5]
     # 准备数据，要在DDP初始化之后进行
     trainloader = get_dataset(mu,ga,batch_size)
 
     # 构造模型
     model = transformer(d_model=9216,num_encoder_layers=2,num_decoder_layers=2,dim_feedforward=2896,batch_first=True).to(device_ids[0])
+    # model.load_state_dict(torch.load(f"./model_cotrain/transformer_9216_2_2_2896_cotrain_best.pt"))
     model.load_state_dict(torch.load(f"./model/transformer_9216_2_2_2896_best.pt"))
+    model.set_simple_train(True)
     param='9216_2_2_2896'
     coder = module.Trans_CNN4D(3,3,8,6)
+    # coder.load_state_dict(torch.load("./model_cotrain/Trans_CNN4D_9216_2_2_2896_cotrain_best.pt"),strict=False)
     coder.load_state_dict(torch.load("./model/Trans_CNN4D_[3, 3, 8, 6, 8, 1, True]_best.pt"),strict=False)
     encoder=coder.patch_embedding.to(0)
-    decoder=coder.patch_decoding.to(7)
+    decoder=coder.patch_decoding.to(6)
     # DDP: 构造DDP model
-    model=data_parallel.BalancedDataParallel(0,module=model, device_ids=device_ids, output_device=7)
-
+    model=data_parallel.BalancedDataParallel(0,module=model, device_ids=device_ids, output_device=6)
+    decoder=data_parallel.BalancedDataParallel(2,module=decoder, device_ids=[6,7], output_device=0)
     # DDP: 要在构造DDP model之后，才能用model初始化optimizer。
     optimizer = torch.optim.AdamW([
         {'params':model.parameters()},
@@ -109,7 +112,7 @@ def train(epochs,mu=1, ga=1e-05,batch_size=5,RF=False):
 
     # 假设我们的loss是这个
     loss_func = Not0Loss
-    writer = SummaryWriter(log_dir=f'./runs_ddp/{model.module.__class__.__name__}_'+param)
+    writer = SummaryWriter(log_dir=f'./runs_cotrain/{model.module.__class__.__name__}_'+param)
     best_loss = float('inf')
     ### 3. 网络训练  ###
     model.train()
@@ -131,7 +134,7 @@ def train(epochs,mu=1, ga=1e-05,batch_size=5,RF=False):
             y=encoder(y).to(1)
             out,_ = model(x,Bx,y)
             out=decoder(out)
-            label=Y.to(7)
+            label=Y.to(0)
             loss = loss_func(out,label)
             loss.backward()
             total_loss+=loss.item()
@@ -145,9 +148,19 @@ def train(epochs,mu=1, ga=1e-05,batch_size=5,RF=False):
             
         if total_loss < best_loss:
             best_loss = total_loss
-            torch.save(model.module.state_dict(), f"./model/{model.module.__class__.__name__}_"+param+"_best.pt")
+            torch.save(model.module.state_dict(), f"./model_cotrain/{model.module.__class__.__name__}_"+param+"_cotrain_best.pt")
+            coder.patch_decoding=decoder.module
+            coder.patch_embedding=encoder
+            torch.save(coder.state_dict(), f"./model_cotrain/{coder.__class__.__name__}_"+param+"_cotrain_best.pt")
+        
+        if epoch==19:
+            model.module.set_simple_train(False)
  
-    torch.save(model.module.state_dict(), f"./model/{model.module.__class__.__name__}_"+param+"_final.pt")
+    torch.save(model.module.state_dict(), f"./model_cotrain/{model.module.__class__.__name__}_"+param+"_cotrain_final.pt")
+    coder.patch_decoding=decoder.module
+    coder.patch_embedding=encoder
+    torch.save(coder.state_dict(), f"./model_cotrain/{coder.__class__.__name__}_"+param+"_cotrain_best.pt")
+    
 
 # train_with_compressed(epochs=80)
-train(epochs=10)
+train_with_compressed(epochs=20)

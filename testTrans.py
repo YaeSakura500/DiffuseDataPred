@@ -1,3 +1,4 @@
+from ast import mod
 from typing import List, Union
 import numpy as np
 import torch
@@ -64,12 +65,15 @@ def test(model_name, param,mu,ga, devices: Union[str, List[int]], data_num=108, 
 
     # model = getattr(module, model_name)(*param)
     model=transformer(d_model=9216,num_encoder_layers=2,num_decoder_layers=2,dim_feedforward=2896,batch_first=True)
+    # model=transformer(d_model=9216,num_encoder_layers=2,num_decoder_layers=2,dim_feedforward=2896,batch_first=True)
     # encoder = module.Encoder()
     coder = module.Trans_CNN4D(3,3,8,6)
     coder.load_state_dict(torch.load("./model/Trans_CNN4D_[3, 3, 8, 6, 8, 1, True]_best.pt"),strict=False)
+    # coder.load_state_dict(torch.load("./model_cotrain/Trans_CNN4D_9216_2_2_2896_cotrain_best.pt"),strict=False)
     encoder=coder.patch_embedding
     decoder=coder.patch_decoding
     model.load_state_dict(torch.load(f"./model/transformer_9216_2_2_2896_best.pt"))
+    # model.load_state_dict(torch.load("./model_cotrain/transformer_9216_2_2_2896_cotrain_best.pt"),strict=False)
     # model.load_state_dict(torch.load(f"./model/{model.__class__.__name__}_9216_2_2_1000_best.pt"))
     model.set_simple_train(False)
         # model.load_state_dict(torch.load(f"./model/{model.__class__.__name__}_{param}_best.pt"))

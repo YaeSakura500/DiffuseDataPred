@@ -1,6 +1,7 @@
 from typing import Optional
 import torch
 import torch.nn as nn
+from loss import Not0Loss
 
 class transformer(nn.Module):
     def __init__(self,
@@ -39,7 +40,7 @@ class transformer(nn.Module):
         self.pred_length=pred_length
         # self.in_linear=nn.Linear(2*d_model,d_model)
         self.out_linear=nn.Linear(d_model,d_model)
-        self.gap=nn.Parameter(torch.zeros(1,1,d_model),requires_grad=True)
+        self.seq=nn.Parameter(torch.zeros(1,1,d_model),requires_grad=True)
         
     def step(self,src,tgt):
         out=self.trans(src,tgt)
@@ -57,27 +58,27 @@ class transformer(nn.Module):
         # condition=self.in_linear(condition)
         condition=bondary+feild
         if shape[0]>1:
-            condition_seq=torch.cat((condition,self.gap.repeat(shape[0],1,1)),dim=1)
+            seq=self.seq.repeat(shape[0],1,1)
         else:
-            condition_seq=torch.cat((condition,self.gap),dim=1)
+            seq=self.seq
         out=feild[::,0:1:,]
+        loss=0
         if self.simple==True:
             for i in range(1,self.pred_length):
-                condition_seq=torch.cat((condition_seq,truth[::,i-1:i:,]),dim=1)
-                next=self.step(condition_seq,truth[::,0:i:,])[::,-1::,]
-                out=torch.cat((out,next),dim=1)
-                # print(out.shape)
+                pred=self.step(condition,torch.cat((seq,truth[::,0:i:,]),dim=1))
+                loss=loss+Not0Loss(pred,truth[:,0:i+1,:])
         else:
-            next=out
-            for _ in range(1,self.pred_length):
-                condition_seq=torch.cat((condition_seq,next),dim=1)
-                next=self.step(condition_seq,out)[::,-1::,]
-                out=torch.cat((out,next),dim=1)
+            pred=out
+            for i in range(1,self.pred_length):
+                next=self.step(condition,torch.cat((seq,pred),dim=1))
+                loss=loss+Not0Loss(next[:,-1,],truth[:,i:i+1,:])
+                loss=loss+Not0Loss(next[:,:-1,],pred)
+                pred=next
+        out=pred
         out_shape=list(shape)
         out_shape[1]=self.pred_length
         out=out.reshape(out_shape)
-        ground=truth[::,0:self.pred_length:,].reshape(out_shape)
-        return out,ground
+        return out,loss
     
     def set_simple_train(self,simple_train:bool):
         self.simple=simple_train
